@@ -66,7 +66,8 @@ params.audio_format = sense.AF_FLOAT32
 # if <= 0. will use all the threads available on the machine
 params.num_threads = -1
 
-sense.SenseInit("{your-project-key}", params)
+if sense.SenseInit("{your-project-key}", params) <= 0:
+    exit(-1)
 
 file = File()
 
