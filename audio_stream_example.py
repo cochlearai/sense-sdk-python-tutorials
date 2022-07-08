@@ -105,9 +105,12 @@ params = sense.Parameters()
 params.service = sense.Human_Interaction
 # AF_UINT8 AF_INT8 AF_INT16 AF_INT32 AF_DOUBLE AF_FLOAT32
 params.audio_format = sense.AF_FLOAT32
-
 # if <= 0. will use all the threads available on the machine
 params.num_threads = -1
+# Metrics
+params.metrics.retention_period = 0  # days
+params.metrics.free_disk_space = 100  # MB
+params.metrics.push_period = 30  # seconds
 
 if sense.SenseInit("{your-project-key}", params) < 0:
     exit(-1)
@@ -117,3 +120,5 @@ with Stream() as stream:
     for stream_data in stream.record(audio_generator):
         result = stream.predict(stream_data)
         print(result)
+
+sense.SenseTerminate()
