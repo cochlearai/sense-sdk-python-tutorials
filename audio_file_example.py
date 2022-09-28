@@ -58,12 +58,8 @@ class File:
         return audio_source.Predict(input_data).to_string()
 
 params = sense.Parameters()
-# Default, Emergency, Human_Interaction, Human_Status, Home_Context
-params.service = sense.Human_Interaction
-# AF_UINT8 AF_INT8 AF_INT16 AF_INT32 AF_DOUBLE AF_FLOAT32
-params.audio_format = sense.AF_FLOAT32
-# Metrics
 
+# Metrics
 params.metrics.retention_period = 0  # days
 params.metrics.free_disk_space = 100  # MB
 params.metrics.push_period = 30  # seconds
@@ -71,11 +67,16 @@ params.metrics.push_period = 30  # seconds
 # if <= 0. will use all the threads available on the machine
 params.num_threads = -1
 
+params.device_name = "Testing device"
+
 if sense.SenseInit("{your-project-key}", params) < 0:
     exit(-1)
 
-file = File()
+file = sense.AudioSourceFile()
+if file.Load("{path-to-your-audio-file}") < 0
+    exit(-1)
 
-print(file.predict("./audio_files/whistle.wav"))
+result = file.Predict()
+print(result.to_string())
 
 sense.SenseTerminate()

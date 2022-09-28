@@ -28,7 +28,7 @@ class Stream:
                 )
 
         self.closed = False
-        self._core_audio_source_stream = sense.AudioSourceStreamFloat()
+        self._core_audio_source_stream = sense.AudioSourceStream()
         return self
 
     def __exit__(self, exc_type, value, traceback):
@@ -101,16 +101,14 @@ class Stream:
         return self._core_audio_source_stream.Predict(stream_data).to_string()
 
 params = sense.Parameters()
-# Default, Emergency, Human_Interaction, Human_Status, Home_Context
-params.service = sense.Human_Interaction
-# AF_UINT8 AF_INT8 AF_INT16 AF_INT32 AF_DOUBLE AF_FLOAT32
-params.audio_format = sense.AF_FLOAT32
 # if <= 0. will use all the threads available on the machine
 params.num_threads = -1
 # Metrics
 params.metrics.retention_period = 0  # days
 params.metrics.free_disk_space = 100  # MB
 params.metrics.push_period = 30  # seconds
+
+params.device_name = "Testing device"
 
 if sense.SenseInit("{your-project-key}", params) < 0:
     exit(-1)
