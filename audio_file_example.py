@@ -73,7 +73,7 @@ if sense.SenseInit("{your-project-key}", params) < 0:
     exit(-1)
 
 file = sense.AudioSourceFile()
-if file.Load("{path-to-your-audio-file}") < 0
+if file.Load("{path-to-your-audio-file}") < 0:
     exit(-1)
 
 result = file.Predict()
