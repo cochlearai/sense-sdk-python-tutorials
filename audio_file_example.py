@@ -1,82 +1,37 @@
 #!/usr/bin/env python3
-from sense import *
-import os
-from os import path
-import sox
-from pydub import AudioSegment
-import numpy as np
+""" Sense SDK audio file example v1.3.0
+"""
+import sys
+from sense import AudioSourceFile, Parameters, SenseInit, SenseTerminate
 
-LIST_OF_FILE_FORMATS = ['mp3', 'wav', 'ogg', 'flac', 'mp4']
-SAMPLE_RATE = 22050
+try:
+    file_path = sys.argv[1]
+except IndexError:
+    print("Usage: python3 audio_file_example.py <PATH_TO_AUDIO_FILE>")
+    sys.exit()
 
-class __SenseSDKError(Exception):
-    """Sense SDK Error exception"""
-    def __init__(self, message):
-        # super(__SenseSDKError, self).__init__(message)
-        self.msg = message
-        super().__init__(self.msg)
-        #3.8?
-        # super(__SenseSDKError, self).__init__(message)
-
-    def __str__(self):
-        return self.msg
-SenseSDKError = __SenseSDKError
-
-class File:
-    def __load_audio_file(self, file_name, file_format):
-        resampled_file_name = '/tmp/resampled.' + file_format
-
-        tfm = sox.Transformer()
-        tfm.rate(SAMPLE_RATE, quality='v')
-        tfm.remix(remix_dictionary=None, num_output_channels=1)
-        tfm.build(file_name, resampled_file_name)
-
-        sound = AudioSegment.from_file(resampled_file_name, file_format)
-        os.unlink(resampled_file_name)
-        sig = np.asarray(sound.get_array_of_samples())
-        sig = sig.astype('float' + str(8*sound.sample_width))
-        sig = sig/np.float(1 << ((8*sound.sample_width)-1))
-
-        return sig
-
-    def __get_fileformat(self, file_name):
-        _, file_ext = os.path.splitext(file_name)
-        file_format = file_ext[1:]
-        if file_format not in LIST_OF_FILE_FORMATS:
-            raise SenseSDKError('Wrong File Format : {}'.format(file_format))
-        return file_format
-
-    def predict(self, file_path):
-        file_exists = path.exists(file_path)
-        if not file_exists:
-            raise SenseSDKError("Could not find '" + file_path + "' file")
-
-        file_format = self.__get_fileformat(file_path)
-        # Load input data from audio file
-        input_data = self.__load_audio_file(file_path, file_format)
-        audio_source = sense.AudioSourceFileFloat()
-        return audio_source.Predict(input_data).to_string()
-
-params = sense.Parameters()
-
-# Metrics
-params.metrics.retention_period = 0  # days
-params.metrics.free_disk_space = 100  # MB
-params.metrics.push_period = 30  # seconds
+params = Parameters()
 
 # if <= 0. will use all the threads available on the machine
 params.num_threads = -1
 
+# Metrics
+params.metrics.retention_period = 0   # days
+params.metrics.free_disk_space = 100  # MB
+params.metrics.push_period = 30       # seconds
+params.log_level = 0
+
 params.device_name = "Testing device"
 
-if sense.SenseInit("{your-project-key}", params) < 0:
-    exit(-1)
+if SenseInit("Your project key",
+             params) < 0:
+    sys.exit(-1)
 
-file = sense.AudioSourceFile()
-if file.Load("{path-to-your-audio-file}") < 0:
-    exit(-1)
+file = AudioSourceFile()
+if file.Load(file_path) < 0:
+    sys.exit(-1)
 
 result = file.Predict()
 print(result.to_string())
 
-sense.SenseTerminate()
+SenseTerminate()

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" This code example checks audio data predictions every second
+""" Sense SDK audio stream example v1.3.0
 """
 import queue
 import signal
@@ -10,8 +10,21 @@ from sense import AudioSourceStream, Parameters, SenseInit, SenseTerminate
 
 SAMPLE_RATE = 22050
 
+class SenseSdkError(Exception):
+    """ Sense SDK Error exception
+    """
+    def __init__(self, message):
+        self.msg = message
+        super().__init__(self.msg)
+
+    def __str__(self):
+        return self.msg
+
+SenseSdkErrorClass = SenseSdkError
+
 class Stream:
-    """ A class designed to read audio data and make predictions at a frequency of one second
+    """ A class designed to catch audio data in real time and make predictions at a frequency of
+        0.5 seconds
     """
     def __init__(self):
         self._audio_interface = None
@@ -60,7 +73,8 @@ class Stream:
         """
         while self._running:
             data = self._buff.get()
-            assert len(data) == self._chunk
+            if len(data) != self._chunk:
+                raise SenseSdkErrorClass(f'The audio length is invalid : {len(data)}')
             yield data
 
     def record(self, generator):
@@ -92,10 +106,12 @@ params.num_threads = -1
 params.metrics.retention_period = 0   # days
 params.metrics.free_disk_space = 100  # MB
 params.metrics.push_period = 30       # seconds
+params.log_level = 0
 
 params.device_name = "Testing device"
 
-if SenseInit("{your-project-key}", params) < 0:
+if SenseInit("Your project key",
+             params) < 0:
     sys.exit(-1)
 
 with Stream() as stream:
