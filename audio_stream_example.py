@@ -21,7 +21,7 @@ class SenseSdkError(Exception):
     def __str__(self):
         return self.msg
 
-SenseSdkErrorClass = SenseSdkError    
+SenseSdkErrorClass = SenseSdkError
 
 class Stream:
     """ A class designed to catch audio data in real time and make predictions at a frequency of
@@ -36,8 +36,8 @@ class Stream:
         self._running = False
         self._temp_buff = None
 
-    def __enter__(self):        
-        self._audio_interface = pyaudio.PyAudio()        
+    def __enter__(self):
+        self._audio_interface = pyaudio.PyAudio()
         self._audio_stream = self._audio_interface.open(
             format=pyaudio.paFloat32,
             channels=1,
