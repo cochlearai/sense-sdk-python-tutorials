@@ -1,37 +1,68 @@
 #!/usr/bin/env python3
-""" Sense SDK audio file example v1.3.0
+""" Sense SDK audio file example v1.4.0
 """
 import sys
 from sense import AudioSourceFile, Parameters, SenseInit, SenseTerminate
 
-try:
-    file_path = sys.argv[1]
-except IndexError:
-    print("Usage: python3 audio_file_example.py <PATH_TO_AUDIO_FILE>")
-    sys.exit()
+def FilePrediction(file_path: str, sense_params: Parameters) -> bool:
+    # Create a sense audio file instance
+    file = AudioSourceFile()
+    result_abbreviation: bool = sense_params.result_abbreviation.enable
 
-params = Parameters()
+    if file.Load(file_path) < 0:
+        return False
 
-# if <= 0. will use all the threads available on the machine
-params.num_threads = -1
+    # Run the prediction, and it will return a 'Result' object containing
+    # multiple 'FrameResult' objects.
+    result = file.Predict()
+    if (not result):
+        print(result.error)
+        return False
 
-# Metrics
-params.metrics.retention_period = 0   # days
-params.metrics.free_disk_space = 100  # MB
-params.metrics.push_period = 30       # seconds
-params.log_level = 0
+    if (result_abbreviation):
+        print("<Result summary>")
+        if (not result.abbreviations):
+            print("There are no detected tags.")
+        else:
+            for abbreviation in result.abbreviations:
+                print(abbreviation)
+            # Even if you use the result abberviation, you can still get precise
+            # results like below if necessary:
+            # print(result.to_string())
+    else:
+        print(result.to_string())
 
-params.device_name = "Testing device"
+    return True
+    
+if __name__ == "__main__":
+    try:
+        file_path = sys.argv[1]
+    except IndexError:
+        print("Usage: python3 audio_file_example.py <PATH_TO_AUDIO_FILE>")
+        sys.exit()
 
-if SenseInit("Your project key",
-             params) < 0:
-    sys.exit(-1)
+    sense_params = Parameters()
 
-file = AudioSourceFile()
-if file.Load(file_path) < 0:
-    sys.exit(-1)
+    # if <= 0. will use all the threads available on the machine
+    sense_params.num_threads = -1
 
-result = file.Predict()
-print(result.to_string())
+    # Metrics
+    sense_params.metrics.retention_period = 0   # range, 1 to 31 days
+    sense_params.metrics.free_disk_space = 100  # range, 0 to 1,000,000 MB
+    sense_params.metrics.push_period = 30       # range, 1 to 3,600 seconds
+    sense_params.log_level = 0
 
-SenseTerminate()
+    sense_params.device_name = "Testing device"
+
+    sense_params.hop_size_control.enable = True
+    sense_params.sensitivity_control.enable = True
+    sense_params.result_abbreviation.enable = True
+    sense_params.label_hiding.enable = True  # stream mode only
+
+    if SenseInit("Your project key",
+                sense_params) < 0:
+        sys.exit(-1)
+
+    if (not FilePrediction(file_path, sense_params)):
+        print("File prediction failed")
+    SenseTerminate()
