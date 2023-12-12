@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" Sense SDK audio stream example v1.3.0
+""" Sense SDK audio stream example v1.4.0
 """
 import queue
 import signal
