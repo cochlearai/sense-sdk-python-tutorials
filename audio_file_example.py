@@ -2,12 +2,12 @@
 """ Sense SDK audio file example v1.4.0
 """
 import sys
-from sense import AudioSourceFile, Parameters, SenseInit, SenseTerminate
+from sense import AudioSourceFile, Parameters, SenseInit, SenseTerminate, get_parameters
 
-def FilePrediction(file_path: str, sense_params: Parameters) -> bool:
+def FilePrediction(file_path: str) -> bool:
     # Create a sense audio file instance
     file = AudioSourceFile()
-    result_abbreviation: bool = sense_params.result_abbreviation.enable
+    result_abbreviation: bool = get_parameters().result_abbreviation.enable
 
     if file.Load(file_path) < 0:
         return False
@@ -63,6 +63,6 @@ if __name__ == "__main__":
                 sense_params) < 0:
         sys.exit(-1)
 
-    if (not FilePrediction(file_path, sense_params)):
+    if (not FilePrediction(file_path)):
         print("File prediction failed")
     SenseTerminate()
