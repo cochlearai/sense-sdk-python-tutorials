@@ -57,7 +57,7 @@ if __name__ == "__main__":
     sense_params.hop_size_control.enable = True
     sense_params.sensitivity_control.enable = True
     sense_params.result_abbreviation.enable = True
-    sense_params.label_hiding.enable = True  # stream mode only
+    sense_params.label_hiding.enable = False  # stream mode only
 
     if SenseInit("Your project key",
                 sense_params) < 0:
