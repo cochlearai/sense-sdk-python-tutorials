@@ -2,12 +2,12 @@
 """ Sense SDK audio file example v1.4.0
 """
 import sys
-from sense import AudioSourceFile, Parameters, SenseInit, SenseTerminate, get_parameters
+from sense import AudioSourceFile, Parameters, SenseInit, SenseTerminate, SenseGetParameters
 
 def FilePrediction(file_path: str) -> bool:
     # Create a sense audio file instance
     file = AudioSourceFile()
-    result_abbreviation: bool = get_parameters().result_abbreviation.enable
+    result_abbreviation: bool = SenseGetParameters().result_abbreviation.enable
 
     if file.Load(file_path) < 0:
         return False
@@ -26,7 +26,7 @@ def FilePrediction(file_path: str) -> bool:
         else:
             for abbreviation in result.abbreviations:
                 print(abbreviation)
-            # Even if you use the result abberviation, you can still get precise
+            # Even if you use the result abbreviation, you can still get precise
             # results like below if necessary:
             # print(result.to_string())
     else:

@@ -6,7 +6,7 @@ import signal
 import sys
 import pyaudio
 import numpy as np
-from sense import AudioSourceStream, Parameters, FrameResult, SenseInit, SenseTerminate, get_parameters
+from sense import AudioSourceStream, Parameters, FrameResult, SenseInit, SenseTerminate, SenseGetParameters
 
 running = True
 SAMPLE_RATE = 22050
@@ -100,7 +100,7 @@ class Stream:
 
 def StreamPrediction() -> bool:
     half_second = True
-    sense_params = get_parameters()
+    sense_params = SenseGetParameters()
     result_abbreviation = sense_params.result_abbreviation.enable
     hop_size_control = sense_params.hop_size_control.enable
     with Stream() as stream:
@@ -128,7 +128,7 @@ def StreamPrediction() -> bool:
             if result_abbreviation:
                 for abbreviation in frame_result.abbreviations:
                     print(abbreviation)
-                # Even if you use the result abberviation, you can still get precise
+                # Even if you use the result abbreviation, you can still get precise
                 # results like below if necessary:
                 # print(frame_result.to_string())
             else:
