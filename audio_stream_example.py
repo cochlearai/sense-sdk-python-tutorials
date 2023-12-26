@@ -157,7 +157,7 @@ if __name__ == "__main__":
     sense_params.label_hiding.enable = True
 
     if SenseInit("Your project key",
-                sense_params) < 0:
+                 sense_params) < 0:
         sys.exit(-1)
 
     if (not StreamPrediction()):

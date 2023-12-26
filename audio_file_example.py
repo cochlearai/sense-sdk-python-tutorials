@@ -60,7 +60,7 @@ if __name__ == "__main__":
     sense_params.label_hiding.enable = False  # stream mode only
 
     if SenseInit("Your project key",
-                sense_params) < 0:
+                 sense_params) < 0:
         sys.exit(-1)
 
     if (not FilePrediction(file_path)):
