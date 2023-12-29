@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
-""" Sense SDK audio stream example v1.3.0
+""" Sense SDK audio stream example v1.4.0
 """
 import queue
 import signal
 import sys
 import pyaudio
 import numpy as np
-from sense import AudioSourceStream, Parameters, SenseInit, SenseTerminate
+from sense import AudioSourceStream, Parameters, FrameResult, SenseInit, SenseTerminate, SenseGetParameters
 
+running = True
 SAMPLE_RATE = 22050
 
 class SenseSdkError(Exception):
@@ -92,40 +93,73 @@ class Stream:
                 self._temp_buff[self._chunk:2*self._chunk] = data[:]
                 yield self._temp_buff
 
-    def predict(self, data):
+    def predict(self, data) -> FrameResult:
         """ Predict for the data parameter(1 sceond of audio data) and return the result
         """
-        return self._core_audio_source_stream.Predict(data).to_string()
+        return self._core_audio_source_stream.Predict(data)
 
-params = Parameters()
+def StreamPrediction() -> bool:
+    half_second = True
+    sense_params = SenseGetParameters()
+    result_abbreviation = sense_params.result_abbreviation.enable
+    hop_size_control = sense_params.hop_size_control.enable
+    with Stream() as stream:
+        def handler(signum, frame):
+            """ Signals handling
+            """
+            # pylint: disable=unused-argument
+            stream.stop()
+            global running
+            running = False
 
-# if <= 0. will use all the threads available on the machine
-params.num_threads = -1
+        signal.signal(signal.SIGINT, handler)
 
-# Metrics
-params.metrics.retention_period = 0   # days
-params.metrics.free_disk_space = 100  # MB
-params.metrics.push_period = 30       # seconds
-params.log_level = 0
+        audio_generator = stream.generator()
+        for stream_data in stream.record(audio_generator):
+            if (not hop_size_control and half_second): 
+                half_second = not half_second
+                continue
 
-params.device_name = "Testing device"
+            frame_result = stream.predict(stream_data)
+            if frame_result.error:
+                print(frame_result.error)
+                break
 
-if SenseInit("Your project key",
-             params) < 0:
-    sys.exit(-1)
+            if result_abbreviation:
+                for abbreviation in frame_result.abbreviations:
+                    print(abbreviation)
+                # Even if you use the result abbreviation, you can still get precise
+                # results like below if necessary:
+                # print(frame_result.to_string())
+            else:
+                print("---------NEW FRAME---------")
+                print(frame_result.to_string())  
 
-with Stream() as stream:
-    def handler(signum, frame):
-        """ Signals handling
-        """
-        # pylint: disable=unused-argument
-        stream.stop()
+    return False if running else True
 
-    signal.signal(signal.SIGINT, handler)
+if __name__ == "__main__":
+    sense_params = Parameters()
 
-    audio_generator = stream.generator()
-    for stream_data in stream.record(audio_generator):
-        result = stream.predict(stream_data)
-        print(result)
+    # if <= 0. will use all the threads available on the machine
+    sense_params.num_threads = -1
 
-SenseTerminate()
+    # Metrics
+    sense_params.metrics.retention_period = 0   # range, 1 to 31 days
+    sense_params.metrics.free_disk_space = 100  # range, 0 to 1,000,000 MB
+    sense_params.metrics.push_period = 30       # range, 1 to 3,600 seconds
+    sense_params.log_level = 0
+
+    sense_params.device_name = "Testing device"
+
+    sense_params.hop_size_control.enable = True
+    sense_params.sensitivity_control.enable = True
+    sense_params.result_abbreviation.enable = True
+    sense_params.label_hiding.enable = True
+
+    if SenseInit("Your project key",
+                 sense_params) < 0:
+        sys.exit(-1)
+
+    if (not StreamPrediction()):
+        print("Stream prediction failed")
+    SenseTerminate()
