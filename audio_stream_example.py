@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" Sense SDK audio stream example v1.4.0
+""" Sense SDK audio stream example v1.5.0
 """
 import queue
 import signal
@@ -25,12 +25,12 @@ SenseSdkErrorClass = SenseSdkError
 
 class Stream:
     """ A class designed to catch audio data in real time and make predictions at a frequency of
-        0.5 seconds
+        1 second
     """
     def __init__(self):
         self._audio_interface = None
         self._audio_stream = None
-        self._chunk = int(SAMPLE_RATE / 2)
+        self._chunk = int(SAMPLE_RATE)
         self._buff = queue.Queue()
         self._core_audio_source_stream = None
         self._running = False
@@ -102,7 +102,6 @@ def StreamPrediction() -> bool:
     half_second = True
     sense_params = SenseGetParameters()
     result_abbreviation = sense_params.result_abbreviation.enable
-    hop_size_control = sense_params.hop_size_control.enable
     with Stream() as stream:
         def handler(signum, frame):
             """ Signals handling
@@ -116,10 +115,6 @@ def StreamPrediction() -> bool:
 
         audio_generator = stream.generator()
         for stream_data in stream.record(audio_generator):
-            if (not hop_size_control and half_second): 
-                half_second = not half_second
-                continue
-
             frame_result = stream.predict(stream_data)
             if frame_result.error:
                 print(frame_result.error)
@@ -151,10 +146,8 @@ if __name__ == "__main__":
 
     sense_params.device_name = "Testing device"
 
-    sense_params.hop_size_control.enable = True
     sense_params.sensitivity_control.enable = True
     sense_params.result_abbreviation.enable = True
-    sense_params.label_hiding.enable = True
 
     if SenseInit("Your project key",
                  sense_params) < 0:

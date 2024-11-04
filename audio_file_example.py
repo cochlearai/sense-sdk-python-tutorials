@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" Sense SDK audio file example v1.4.0
+""" Sense SDK audio file example v1.5.0
 """
 import sys
 from sense import AudioSourceFile, Parameters, SenseInit, SenseTerminate, SenseGetParameters
@@ -54,10 +54,8 @@ if __name__ == "__main__":
 
     sense_params.device_name = "Testing device"
 
-    sense_params.hop_size_control.enable = True
     sense_params.sensitivity_control.enable = True
     sense_params.result_abbreviation.enable = True
-    sense_params.label_hiding.enable = False  # stream mode only
 
     if SenseInit("Your project key",
                  sense_params) < 0:
