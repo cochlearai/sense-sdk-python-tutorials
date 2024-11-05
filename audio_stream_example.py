@@ -6,14 +6,22 @@ import signal
 import sys
 import pyaudio
 import numpy as np
-from sense import AudioSourceStream, Parameters, FrameResult, SenseInit, SenseTerminate, SenseGetParameters
+from sense import (
+    AudioSourceStream,
+    Parameters,
+    FrameResult,
+    SenseInit,
+    SenseTerminate,
+    SenseGetParameters,
+)
 
 running = True
 SAMPLE_RATE = 22050
 
+
 class SenseSdkError(Exception):
-    """ Sense SDK Error exception
-    """
+    """Sense SDK Error exception"""
+
     def __init__(self, message):
         self.msg = message
         super().__init__(self.msg)
@@ -21,16 +29,19 @@ class SenseSdkError(Exception):
     def __str__(self):
         return self.msg
 
+
 SenseSdkErrorClass = SenseSdkError
 
+
 class Stream:
-    """ A class designed to catch audio data in real time and make predictions at a frequency of
-        1 second
     """
+    A class designed to catch audio data in real time and make predictions at a frequency of 1 second
+    """
+
     def __init__(self):
         self._audio_interface = None
         self._audio_stream = None
-        self._chunk = int(SAMPLE_RATE)
+        self._chunk = None
         self._buff = queue.Queue()
         self._core_audio_source_stream = None
         self._running = False
@@ -38,14 +49,16 @@ class Stream:
 
     def __enter__(self):
         self._audio_interface = pyaudio.PyAudio()
+        self._core_audio_source_stream = AudioSourceStream()
+        self._chunk = self._core_audio_source_stream.get_buffer_size()
         self._audio_stream = self._audio_interface.open(
             format=pyaudio.paFloat32,
             channels=1,
             rate=SAMPLE_RATE,
             input=True,
             frames_per_buffer=self._chunk,
-            stream_callback=self._fill_buffer)
-        self._core_audio_source_stream = AudioSourceStream()
+            stream_callback=self._fill_buffer,
+        )
         self._running = True
 
         return self
@@ -65,21 +78,19 @@ class Stream:
         return None, pyaudio.paContinue
 
     def stop(self):
-        """ Stop the audio stream prediction.
-        """
+        """Stop the audio stream prediction."""
         self._running = False
 
     def generator(self):
-        """ Returns the audio stream generator.
-        """
+        """Returns the audio stream generator."""
         while self._running:
             data = self._buff.get()
             if len(data) != self._chunk:
-                raise SenseSdkErrorClass(f'The audio length is invalid : {len(data)}')
+                raise SenseSdkErrorClass(f"The audio length is invalid : {len(data)}")
             yield data
 
     def record(self, generator):
-        """ Record the audio stream
+        """Record the audio stream
 
         Arguments:
             generator: audio stream generator
@@ -89,23 +100,24 @@ class Stream:
                 data = np.concatenate((data, data), axis=None)
                 self._temp_buff = data
             else:
-                self._temp_buff[0:self._chunk] = self._temp_buff[self._chunk:2*self._chunk]
-                self._temp_buff[self._chunk:2*self._chunk] = data[:]
+                self._temp_buff[0 : self._chunk] = self._temp_buff[
+                    self._chunk : 2 * self._chunk
+                ]
+                self._temp_buff[self._chunk : 2 * self._chunk] = data[:]
                 yield self._temp_buff
 
     def predict(self, data) -> FrameResult:
-        """ Predict for the data parameter(1 sceond of audio data) and return the result
-        """
+        """Predict for the data parameter(1 sceond of audio data) and return the result"""
         return self._core_audio_source_stream.Predict(data)
 
-def StreamPrediction() -> bool:
-    half_second = True
+
+def stream_prediction() -> bool:
     sense_params = SenseGetParameters()
     result_abbreviation = sense_params.result_abbreviation.enable
     with Stream() as stream:
+
         def handler(signum, frame):
-            """ Signals handling
-            """
+            """Signals handling"""
             # pylint: disable=unused-argument
             stream.stop()
             global running
@@ -128,9 +140,10 @@ def StreamPrediction() -> bool:
                 # print(frame_result.to_string())
             else:
                 print("---------NEW FRAME---------")
-                print(frame_result.to_string())  
+                print(frame_result.to_string())
 
     return False if running else True
+
 
 if __name__ == "__main__":
     sense_params = Parameters()
@@ -139,9 +152,9 @@ if __name__ == "__main__":
     sense_params.num_threads = -1
 
     # Metrics
-    sense_params.metrics.retention_period = 0   # range, 1 to 31 days
+    sense_params.metrics.retention_period = 0  # range, 1 to 31 days
     sense_params.metrics.free_disk_space = 100  # range, 0 to 1,000,000 MB
-    sense_params.metrics.push_period = 30       # range, 1 to 3,600 seconds
+    sense_params.metrics.push_period = 30  # range, 1 to 3,600 seconds
     sense_params.log_level = 0
 
     sense_params.device_name = "Testing device"
@@ -149,10 +162,10 @@ if __name__ == "__main__":
     sense_params.sensitivity_control.enable = True
     sense_params.result_abbreviation.enable = True
 
-    if SenseInit("Your project key",
-                 sense_params) < 0:
+    if SenseInit("Your project key", sense_params) < 0:
         sys.exit(-1)
 
-    if (not StreamPrediction()):
+    if not stream_prediction():
         print("Stream prediction failed")
     SenseTerminate()
+
