@@ -17,6 +17,7 @@ from sense import (
 
 running = True
 SAMPLE_RATE = 22050
+CHANNELS = 1
 
 
 class SenseSdkError(Exception):
@@ -50,13 +51,17 @@ class Stream:
     def __enter__(self):
         self._audio_interface = pyaudio.PyAudio()
         self._core_audio_source_stream = AudioSourceStream()
-        self._chunk = self._core_audio_source_stream.get_buffer_size()
+        self._chunk = int(
+            SAMPLE_RATE * CHANNELS * self._core_audio_source_stream.get_hop_size()
+        )
         self._audio_stream = self._audio_interface.open(
             format=pyaudio.paFloat32,
-            channels=1,
+            channels=CHANNELS,
             rate=SAMPLE_RATE,
             input=True,
-            frames_per_buffer=self._chunk,
+            frames_per_buffer=int(
+                SAMPLE_RATE * self._core_audio_source_stream.get_hop_size()
+            ),
             stream_callback=self._fill_buffer,
         )
         self._running = True
@@ -108,7 +113,7 @@ class Stream:
 
     def predict(self, data) -> FrameResult:
         """Predict for the data parameter(1 sceond of audio data) and return the result"""
-        return self._core_audio_source_stream.Predict(data)
+        return self._core_audio_source_stream.Predict(data, SAMPLE_RATE)
 
 
 def stream_prediction() -> bool:
