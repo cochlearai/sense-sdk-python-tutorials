@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" Sense SDK audio file example v1.5.0
+""" Sense SDK audio file example v1.6.0
 """
 import sys
 from sense import (
@@ -8,13 +8,13 @@ from sense import (
     SenseInit,
     SenseTerminate,
     SenseGetParameters,
+    SenseGetSelectedTags,
 )
-
 
 def file_prediction(file_path: str) -> bool:
     # Create a sense audio file instance
     file = AudioSourceFile()
-    result_abbreviation: bool = SenseGetParameters().result_abbreviation.enable
+    result_summary: bool = SenseGetParameters().result_summary.enable
 
     if file.Load(file_path) < 0:
         return False
@@ -26,14 +26,14 @@ def file_prediction(file_path: str) -> bool:
         print(result.error)
         return False
 
-    if result_abbreviation:
+    if result_summary:
         print("<Result summary>")
-        if not result.abbreviations:
+        if not result.summaries:
             print("There are no detected tags.")
         else:
-            for abbreviation in result.abbreviations:
-                print(abbreviation)
-            # Even if you use the result abbreviation, you can still get precise
+            for summary in result.summaries:
+                print(summary)
+            # Even if you use the result summary, you can still get precise
             # results like below if necessary:
             # print(result.to_string())
     else:
@@ -48,27 +48,17 @@ if __name__ == "__main__":
     except IndexError:
         print("Usage: python3 audio_file_example.py <PATH_TO_AUDIO_FILE>")
         sys.exit()
-
-    sense_params = Parameters()
-
-    # if <= 0. will use all the threads available on the machine
-    sense_params.num_threads = -1
-
-    # Metrics
-    sense_params.metrics.retention_period = 0  # range, 1 to 31 days
-    sense_params.metrics.free_disk_space = 100  # range, 0 to 1,000,000 MB
-    sense_params.metrics.push_period = 30  # range, 1 to 3,600 seconds
-    sense_params.log_level = 0
-
-    sense_params.device_name = "Testing device"
-
-    sense_params.sensitivity_control.enable = True
-    sense_params.result_abbreviation.enable = True
-
-    if SenseInit("Your project key", sense_params) < 0:
+    project_key = "Your project key"
+    config_file_path = "./config.json"
+    if SenseInit(project_key, config_file_path) < 0:
         sys.exit(-1)
+
+    selected_tags = SenseGetSelectedTags()
+    print("Selected tags:")
+    for tag in selected_tags:
+        print(f"** {tag}")
+    print("--------------------------------")
 
     if not file_prediction(file_path):
         print("File prediction failed")
     SenseTerminate()
-

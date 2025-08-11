@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-""" Sense SDK audio stream example v1.5.0
+""" Sense SDK audio stream example v1.6.0
 """
 import queue
 import signal
@@ -13,6 +13,7 @@ from sense import (
     SenseInit,
     SenseTerminate,
     SenseGetParameters,
+    SenseGetSelectedTags,
 )
 
 running = True
@@ -118,7 +119,7 @@ class Stream:
 
 def stream_prediction() -> bool:
     sense_params = SenseGetParameters()
-    result_abbreviation = sense_params.result_abbreviation.enable
+    result_summary = sense_params.result_summary.enable
     with Stream() as stream:
 
         def handler(signum, frame):
@@ -137,10 +138,10 @@ def stream_prediction() -> bool:
                 print(frame_result.error)
                 break
 
-            if result_abbreviation:
-                for abbreviation in frame_result.abbreviations:
-                    print(abbreviation)
-                # Even if you use the result abbreviation, you can still get precise
+            if result_summary:
+                for summary in frame_result.summaries:
+                    print(summary)
+                # Even if you use the result summary, you can still get precise
                 # results like below if necessary:
                 # print(frame_result.to_string())
             else:
@@ -151,26 +152,17 @@ def stream_prediction() -> bool:
 
 
 if __name__ == "__main__":
-    sense_params = Parameters()
-
-    # if <= 0. will use all the threads available on the machine
-    sense_params.num_threads = -1
-
-    # Metrics
-    sense_params.metrics.retention_period = 0  # range, 1 to 31 days
-    sense_params.metrics.free_disk_space = 100  # range, 0 to 1,000,000 MB
-    sense_params.metrics.push_period = 30  # range, 1 to 3,600 seconds
-    sense_params.log_level = 0
-
-    sense_params.device_name = "Testing device"
-
-    sense_params.sensitivity_control.enable = True
-    sense_params.result_abbreviation.enable = True
-
-    if SenseInit("Your project key", sense_params) < 0:
+    project_key = "Your project key"
+    config_file_path = "./config.json"
+    if SenseInit(project_key, config_file_path) < 0:
         sys.exit(-1)
+
+    selected_tags = SenseGetSelectedTags()
+    print("Selected tags:")
+    for tag in selected_tags:
+        print(f"** {tag}")
+    print("--------------------------------")
 
     if not stream_prediction():
         print("Stream prediction failed")
     SenseTerminate()
-
