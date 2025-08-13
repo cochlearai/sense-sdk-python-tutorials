@@ -157,12 +157,6 @@ if __name__ == "__main__":
     if SenseInit(project_key, config_file_path) < 0:
         sys.exit(-1)
 
-    selected_tags = SenseGetSelectedTags()
-    print("Selected tags:")
-    for tag in selected_tags:
-        print(f"** {tag}")
-    print("--------------------------------")
-
     if not stream_prediction():
         print("Stream prediction failed")
     SenseTerminate()

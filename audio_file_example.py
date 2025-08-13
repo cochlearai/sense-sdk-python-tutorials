@@ -53,12 +53,6 @@ if __name__ == "__main__":
     if SenseInit(project_key, config_file_path) < 0:
         sys.exit(-1)
 
-    selected_tags = SenseGetSelectedTags()
-    print("Selected tags:")
-    for tag in selected_tags:
-        print(f"** {tag}")
-    print("--------------------------------")
-
     if not file_prediction(file_path):
         print("File prediction failed")
     SenseTerminate()
