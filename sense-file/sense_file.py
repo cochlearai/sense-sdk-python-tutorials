@@ -29,18 +29,13 @@ PROJECT_KEY = "YOUR_PROJECT_KEY"
 
 
 def _fmt_num(value: float) -> str:
-    """Formats a number like C++'s default ostream (6 significant digits,
-    trailing zeros dropped) so the output matches the C++ tutorial exactly."""
+    """6 significant digits, trailing zeros dropped."""
     return f"{float(value):.6g}"
 
 
 class ResultPrinter(sense.ResultListener):
     """Fires once per inference window. Runs on the inference thread, so keep it
-    cheap. Must outlive the processor.
-
-    Output mirrors the C++ tutorial: pretty-printed JSON per window when result
-    summary is OFF, otherwise the summary lines ("At X.X-Y.Ys, [tag] was
-    detected"). The mode is read from the live feature state, like C++."""
+    cheap. Must outlive the processor."""
 
     # Class-level default; set per instance via set_processor() (avoids adding
     # an __init__ to a SWIG director subclass).

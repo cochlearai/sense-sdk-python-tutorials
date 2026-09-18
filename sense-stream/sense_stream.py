@@ -46,18 +46,12 @@ DEFAULT_HOP_SIZE = 1.0
 
 
 def _fmt_num(value: float) -> str:
-    """Formats a number like C++'s default ostream (6 significant digits,
-    trailing zeros dropped) so the output matches the C++ tutorial exactly."""
+    """6 significant digits, trailing zeros dropped."""
     return f"{float(value):.6g}"
 
 
 class ResultPrinter(sense.ResultListener):
-    """Fires once per inference window. Must outlive the processor.
-
-    Output mirrors the C++ tutorial: pretty-printed JSON per window when result
-    summary is OFF, otherwise the summary lines ("At X.X-Y.Ys, [tag] was
-    detected", plus "Listening..." in stream mode). The mode is read from the
-    live feature state, exactly like the C++ example."""
+    """Fires once per inference window. Must outlive the processor."""
 
     # Class-level default; set per instance via set_processor() (avoids adding
     # an __init__ to a SWIG director subclass).
@@ -130,18 +124,21 @@ def main() -> int:
     with sense.session(PROJECT_KEY, config):
         processor = sense.create_stream_processor(listener)
         listener.set_processor(processor)  # lets on_result read the live state
+
         # Optional runtime controls (safe after creation; AAD/AGC are stream-mode only):
         #   processor.sensitivity = "HIGH"       # VERY_LOW|LOW|NORMAL|HIGH|VERY_HIGH
         #   processor.set_tag_sensitivity("Footstep", "LOW")
         #   processor.result_summary_enabled = True
         #   processor.audio_activity_detection = True   # stream-mode only
         #   processor.automatic_gain_control = True     # stream-mode only
+
         # Capture at the model's rate so no resampling is needed. A higher device
         # rate also works (the SDK downsamples to the model rate). Capture rates
         # BELOW the model rate are not supported (upsampling cannot recover the
         # missing high frequencies the model needs), so this tutorial always
         # captures at the model rate.
         rate = processor.model_sample_rate()
+
         # Read one hop of audio per push, matching the SDK's inference cadence
         # (config.json "default_hopsize"). The SDK still buffers pushed audio in
         # its own FIFO, so this only sets how much we read per loop.
