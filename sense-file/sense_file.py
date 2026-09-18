@@ -20,6 +20,7 @@ Set PROJECT_KEY below. A config.json in the working directory is used if present
 (missing is non-fatal).
 """
 
+import signal
 import sys
 
 import sense
@@ -97,6 +98,14 @@ def main() -> int:
     with sense.session(PROJECT_KEY, config):  # init() ... terminate()
         processor = sense.create_file_processor(audio_path, listener)
         listener.set_processor(processor)  # lets on_result read the live state
+
+        # Ctrl-C: stop processing cooperatively instead of letting the default
+        # handler raise KeyboardInterrupt, which could fire inside the on_result
+        # callback (a SWIG director) and surface as an opaque "SWIG director
+        # method error". processor.stop() ends start() cleanly at the next
+        # window (same pattern as the C++ tutorial's StopProcessing()).
+        signal.signal(signal.SIGINT, lambda _signum, _frame: processor.stop())
+
         # Optional runtime controls (safe after creation):
         #   processor.sensitivity = "HIGH"       # VERY_LOW|LOW|NORMAL|HIGH|VERY_HIGH
         #   processor.set_tag_sensitivity("Footstep", "LOW")

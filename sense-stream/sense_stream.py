@@ -22,6 +22,7 @@ Set PROJECT_KEY below. A config.json in the working directory is used if present
 """
 
 import json
+import signal
 import sys
 
 import sense
@@ -120,6 +121,18 @@ def main() -> int:
     config = read_config("config.json")
     hop_size = parse_hop_size(config)  # seconds; from config.json (or fallback)
 
+    # Ctrl-C handling: set a flag instead of letting the default handler raise
+    # KeyboardInterrupt. The interrupt could otherwise fire *inside* the
+    # on_result callback (a SWIG director) and surface as an opaque
+    # "SWIG director method error"; the capture loop below checks this flag.
+    stop = False
+
+    def request_stop(_signum, _frame):
+        nonlocal stop
+        stop = True
+
+    signal.signal(signal.SIGINT, request_stop)
+
     listener = ResultPrinter()
     with sense.session(PROJECT_KEY, config):
         processor = sense.create_stream_processor(listener)
@@ -160,14 +173,12 @@ def main() -> int:
         # map directly to SampleFormat.INT16.
         mic = sd.RawInputStream(samplerate=rate, channels=NUM_CHANNELS, dtype="int16")
         with mic, processor:  # mic open; processor.start() arms the stream
-            try:
-                while True:
-                    data, _overflowed = mic.read(block_frames)
-                    processor.push(
-                        bytes(data), NUM_CHANNELS, sense.SampleFormat.INT16, rate
-                    )
-            except KeyboardInterrupt:
-                print("\nstopped.", file=sys.stderr)
+            while not stop:
+                data, _overflowed = mic.read(block_frames)
+                processor.push(
+                    bytes(data), NUM_CHANNELS, sense.SampleFormat.INT16, rate
+                )
+        print("\nstopped.", file=sys.stderr)
     return 0
 
 
