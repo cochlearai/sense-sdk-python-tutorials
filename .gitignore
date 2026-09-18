@@ -1,0 +1,12 @@
+# ===========================================================================
+# Python tutorials -- the staged SDK and Python caches.
+# ===========================================================================
+
+# --- Staged Sense SDK (wheel + sl daemon staged here; see README) ---
+sense/
+
+# --- Python caches / virtual environments ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/

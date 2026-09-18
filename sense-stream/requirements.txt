@@ -1,0 +1,9 @@
+# Extra dependencies for the sense-stream tutorial.
+#
+# The Sense wheel has NO runtime dependencies -- install it separately for your
+# interpreter/arch (built by the release pipeline):
+#   pip install sense-<ver>-cp3XY-cp3XY-linux_<arch>.whl
+#
+# Microphone capture for sense_stream.py. Needs system PortAudio:
+#   sudo apt-get install -y libportaudio2
+sounddevice>=0.4
